@@ -2,34 +2,7 @@
 import AppLayout from "../../Layouts/AppLayout";
 import { Link } from "@inertiajs/react";
 
-export default function SitesIndex() {
-    const sites = [
-        {
-            id: 1,
-            domain: "blog.example.com",
-            server: { name: "Main VPS" },
-            status: "running",
-            phpVersion: "8.2",
-            lastBackup: "3m ago",
-        },
-        {
-            id: 2,
-            domain: "shop.example.com",
-            server: { name: "DO #1" },
-            status: "running",
-            phpVersion: "8.1",
-            lastBackup: "1h ago",
-        },
-        {
-            id: 3,
-            domain: "dev.example.com",
-            server: { name: "Main VPS" },
-            status: "stopped",
-            phpVersion: "8.2",
-            lastBackup: "1d ago",
-        },
-    ];
-
+export default function SitesIndex({ sites = [] }) {
     return (
         <AppLayout title="Sites">
             <div className="flex items-center justify-between mb-6">
@@ -37,7 +10,9 @@ export default function SitesIndex() {
                     <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
                         Projects
                     </p>
-                    <h1 className="text-2xl font-bold text-neutral-50">Sites</h1>
+                    <h1 className="text-2xl font-bold text-neutral-50">
+                        Sites
+                    </h1>
                 </div>
                 <Link
                     href="/sites/create"
@@ -61,14 +36,14 @@ export default function SitesIndex() {
                                 {site.domain}
                             </Link>
                             <p className="text-xs uppercase tracking-[0.2em] text-neutral-500 mt-2">
-                                {site.server.name} · PHP {site.phpVersion}
+                                {site.server?.name} · PHP {site.php_version}
                             </p>
                         </div>
 
                         <div className="mt-4 flex items-center justify-between text-xs">
                             <StatusBadge status={site.status} />
                             <span className="text-neutral-500 uppercase tracking-[0.15em]">
-                                Last backup: {site.lastBackup}
+                                Last backup: {site.last_backup_at ?? "—"}
                             </span>
                         </div>
                     </div>

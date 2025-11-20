@@ -2,20 +2,20 @@
 import AppLayout from "../../Layouts/AppLayout";
 import { Link } from "@inertiajs/react";
 
-export default function ServerShow({ serverId }) {
-    // Placeholder data until we wire up real DB-backed props.
-    const server = {
-        id: serverId ?? 1,
-        name: `Server #${serverId ?? 1}`,
-        provider: "Hetzner",
-        host: "203.0.113.5",
-        region: "fsn1",
-        os: "Ubuntu 24.04 LTS",
-        memory: "8 GB",
-        disk: "160 GB NVMe",
-        status: "online",
-        ipAddresses: ["203.0.113.5", "10.0.0.5"],
+export default function ServerShow({ server }) {
+    const fallback = {
+        name: "Server",
+        provider: "Unknown",
+        host: "n/a",
+        region: "n/a",
+        os: "Unknown",
+        memory: "n/a",
+        disk: "n/a",
+        status: "offline",
+        ip_addresses: [],
     };
+    const safeServer = server ?? fallback;
+    const sites = server?.sites ?? [];
 
     const services = [
         { name: "Docker", status: "running" },
@@ -24,14 +24,8 @@ export default function ServerShow({ serverId }) {
         { name: "Fail2ban", status: "running" },
     ];
 
-    const sites = [
-        { id: 1, domain: "blog.example.com", status: "running" },
-        { id: 2, domain: "shop.example.com", status: "running" },
-        { id: 3, domain: "dev.example.com", status: "stopped" },
-    ];
-
     return (
-        <AppLayout title={`Server · ${server.name}`}>
+        <AppLayout title={`Server · ${safeServer.name}`}>
             <div className="flex flex-col lg:flex-row gap-6">
                 <div className="flex-1 space-y-6">
                     <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
@@ -40,19 +34,31 @@ export default function ServerShow({ serverId }) {
                                 <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
                                     Server
                                 </p>
-                                <h1 className="text-2xl font-bold text-neutral-50">{server.name}</h1>
+                                <h1 className="text-2xl font-bold text-neutral-50">
+                                    {safeServer.name}
+                                </h1>
                                 <p className="text-xs uppercase tracking-[0.2em] text-neutral-500 mt-1">
-                                    {server.provider} · {server.region} · {server.os}
+                                    {safeServer.provider} · {safeServer.region} ·{" "}
+                                    {safeServer.os}
                                 </p>
                             </div>
-                            <StatusBadge status={server.status} />
+                            <StatusBadge status={safeServer.status} />
                         </div>
 
                         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <InfoTile label="Public IP" value={server.host} />
-                            <InfoTile label="Private IP" value={server.ipAddresses[1]} />
-                            <InfoTile label="Memory" value={server.memory} />
-                            <InfoTile label="Disk" value={server.disk} />
+                            <InfoTile
+                                    label="Public IP"
+                                value={safeServer.host}
+                            />
+                            <InfoTile
+                                label="Private IP"
+                                value={safeServer.ip_addresses?.[1] ?? "—"}
+                            />
+                            <InfoTile
+                                label="Memory"
+                                value={safeServer.memory}
+                            />
+                            <InfoTile label="Disk" value={safeServer.disk} />
                         </div>
 
                         <div className="mt-6 flex flex-wrap gap-2 text-xs">
@@ -80,7 +86,9 @@ export default function ServerShow({ serverId }) {
                                     key={service.name}
                                     className="flex items-center justify-between px-4 py-3 rounded-lg border border-neutral-800 bg-neutral-950"
                                 >
-                                    <span className="text-neutral-100 font-semibold">{service.name}</span>
+                                    <span className="text-neutral-100 font-semibold">
+                                        {service.name}
+                                    </span>
                                     <StatusBadge status={service.status} />
                                 </div>
                             ))}
@@ -121,6 +129,11 @@ export default function ServerShow({ serverId }) {
                                     <StatusBadge status={site.status} />
                                 </li>
                             ))}
+                            {sites.length === 0 && (
+                                <li className="px-3 py-3 rounded-md border border-neutral-800 bg-neutral-950 text-neutral-500 text-[11px] uppercase tracking-[0.15em]">
+                                    No sites yet.
+                                </li>
+                            )}
                         </ul>
                     </div>
                 </div>
@@ -145,7 +158,9 @@ function StatusBadge({ status }) {
         : "bg-red-900/40 text-red-200 border border-red-800";
 
     return (
-        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] uppercase tracking-[0.2em] ${color}`}>
+        <span
+            className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] uppercase tracking-[0.2em] ${color}`}
+        >
             ● {isOnline ? "Online" : "Offline"}
         </span>
     );

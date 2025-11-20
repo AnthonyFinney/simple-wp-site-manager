@@ -2,29 +2,7 @@
 import AppLayout from "../../Layouts/AppLayout";
 import { Link } from "@inertiajs/react";
 
-export default function ServersIndex() {
-    // fake data
-    const servers = [
-        {
-            id: 1,
-            name: "Main VPS",
-            host: "192.168.0.10",
-            provider: "Hetzner",
-            sites_count: 4,
-            status: "online",
-            region: "fsn1",
-        },
-        {
-            id: 2,
-            name: "DO #1",
-            host: "203.0.113.5",
-            provider: "DigitalOcean",
-            sites_count: 3,
-            status: "online",
-            region: "sgp1",
-        },
-    ];
-
+export default function ServersIndex({ servers = [] }) {
     return (
         <AppLayout title="Servers">
             <div className="flex items-center justify-between mb-6">
@@ -32,7 +10,9 @@ export default function ServersIndex() {
                     <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
                         Inventory
                     </p>
-                    <h1 className="text-2xl font-bold text-neutral-50">Servers</h1>
+                    <h1 className="text-2xl font-bold text-neutral-50">
+                        Servers
+                    </h1>
                 </div>
                 <Link
                     href="/servers/create"
@@ -57,7 +37,11 @@ export default function ServersIndex() {
                         {servers.map((server, idx) => (
                             <tr
                                 key={server.id}
-                                className={idx % 2 === 0 ? "bg-neutral-950" : "bg-neutral-900"}
+                                className={
+                                    idx % 2 === 0
+                                        ? "bg-neutral-950"
+                                        : "bg-neutral-900"
+                                }
                             >
                                 <Td>
                                     <Link
@@ -74,9 +58,7 @@ export default function ServersIndex() {
                                 <Td>{server.provider}</Td>
                                 <Td>{server.sites_count}</Td>
                                 <Td>
-                                    <span className="inline-flex items-center px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] rounded-full bg-emerald-900/40 text-emerald-200 border border-emerald-800">
-                                        ● Online
-                                    </span>
+                                    <StatusBadge status={server.status} />
                                 </Td>
                             </tr>
                         ))}
@@ -98,5 +80,20 @@ function Th({ children }) {
 function Td({ children }) {
     return (
         <td className="px-4 py-3 align-middle text-neutral-100">{children}</td>
+    );
+}
+
+function StatusBadge({ status }) {
+    const isUp = (status || "").toLowerCase() === "online";
+    const color = isUp
+        ? "bg-emerald-900/40 text-emerald-200 border border-emerald-800"
+        : "bg-red-900/40 text-red-200 border border-red-800";
+
+    return (
+        <span
+            className={`inline-flex items-center px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] rounded-full ${color}`}
+        >
+            ● {isUp ? "Online" : "Offline"}
+        </span>
     );
 }
