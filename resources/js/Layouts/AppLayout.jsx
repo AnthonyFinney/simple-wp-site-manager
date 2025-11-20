@@ -2,9 +2,10 @@
 import { Link, Head, usePage } from "@inertiajs/react";
 
 const navItems = [
-    { name: "Dashboard", href: "/dashboard" },
+    { name: "Dashboard", href: "/" },
     { name: "Servers", href: "/servers" },
     { name: "Sites", href: "/sites" },
+    { name: "Backups", href: "/backups" },
 ];
 
 export default function AppLayout({ title, children }) {
@@ -13,59 +14,65 @@ export default function AppLayout({ title, children }) {
     return (
         <>
             <Head title={title} />
-            <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+            <div className="min-h-screen bg-neutral-950 text-neutral-50 flex border-t-8 border-red-600">
                 {/* Sidebar */}
-                <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col">
-                    <div className="px-4 py-4 border-b border-slate-800">
-                        <span className="font-semibold tracking-tight text-lg">
+                <aside className="w-64 border-r border-neutral-800 bg-neutral-900 flex flex-col">
+                    <div className="px-6 py-6 border-b border-neutral-800">
+                        <div className="uppercase tracking-[0.2em] text-[11px] text-neutral-400">
                             WP Control
-                        </span>
-                        <p className="text-xs text-slate-400">
-                            VPS WordPress Manager
-                        </p>
+                        </div>
+                        <div className="mt-2 text-xl font-semibold text-neutral-50">WordPress Ops</div>
+                        <div className="text-xs text-neutral-500">Swiss grid edition</div>
                     </div>
 
-                    <nav className="flex-1 px-2 py-4 space-y-1">
+                    <nav className="flex-1 px-4 py-6 space-y-1">
                         {navItems.map((item) => {
-                            const active = url.startsWith(item.href);
+                            const active =
+                                item.href === "/"
+                                    ? url === "/" || url.startsWith("/dashboard")
+                                    : url.startsWith(item.href);
                             return (
                                 <Link
                                     key={item.name}
                                     href={item.href}
                                     className={
-                                        "flex items-center px-3 py-2 rounded-md text-sm font-medium transition " +
+                                        "flex items-center justify-between px-3 py-3 uppercase text-[11px] tracking-[0.2em] border-l-4 transition " +
                                         (active
-                                            ? "bg-slate-800 text-sky-300"
-                                            : "text-slate-300 hover:bg-slate-800 hover:text-sky-200")
+                                            ? "border-red-500 text-red-300 bg-neutral-800"
+                                            : "border-transparent text-neutral-300 hover:border-neutral-700 hover:bg-neutral-800")
                                     }
                                 >
-                                    {item.name}
+                                    <span>{item.name}</span>
+                                    <span className="text-[10px] text-neutral-500">→</span>
                                 </Link>
                             );
                         })}
                     </nav>
 
-                    <div className="px-4 py-3 border-t border-slate-800 text-xs text-slate-500">
+                    <div className="px-6 py-4 border-t border-neutral-800 text-xs text-neutral-400">
                         Logged in as{" "}
-                        <span className="text-slate-300">Demo User</span>
+                        <span className="font-semibold text-neutral-50">Demo User</span>
                     </div>
                 </aside>
 
                 {/* Main content */}
                 <div className="flex-1 flex flex-col">
                     {/* Top bar */}
-                    <header className="h-14 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/70 backdrop-blur">
-                        <div className="font-medium text-sm text-slate-200">
-                            {title}
+                    <header className="h-16 border-b border-neutral-800 flex items-center justify-between px-8 bg-neutral-900/80 backdrop-blur">
+                        <div>
+                            <div className="text-[11px] uppercase tracking-[0.3em] text-neutral-500">
+                                {title}
+                            </div>
+                            <div className="text-sm font-semibold text-neutral-50">Site manager dashboard</div>
                         </div>
-                        <div className="text-xs text-slate-400">
-                            Environment:{" "}
-                            <span className="text-emerald-300">Local</span>
+                        <div className="text-xs text-neutral-400 flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
+                            Environment: Local
                         </div>
                     </header>
 
                     {/* Page content */}
-                    <main className="flex-1 p-6 overflow-y-auto">
+                    <main className="flex-1 p-8 overflow-y-auto">
                         {children}
                     </main>
                 </div>

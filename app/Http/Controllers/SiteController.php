@@ -33,4 +33,14 @@ class SiteController extends Controller
             'siteId' => $id,
         ]);
     }
+
+    /**
+     * Edit settings for a site.
+     */
+    public function edit(int $id)
+    {
+        return Inertia::render('Sites/Edit', [
+            'siteId' => $id,
+        ]);
+    }
 }

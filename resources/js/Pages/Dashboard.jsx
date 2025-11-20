@@ -34,70 +34,92 @@ export default function Dashboard() {
 
     return (
         <AppLayout title="Dashboard">
-            {/* Stat cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <StatCard label="Servers" value={stats.servers} />
-                <StatCard label="Total Sites" value={stats.sites} />
-                <StatCard
-                    label="Running Sites"
-                    value={stats.runningSites}
-                    tone="good"
-                />
-                <StatCard
-                    label="Stopped Sites"
-                    value={stats.stoppedSites}
-                    tone="bad"
-                />
-            </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Backups card */}
-                <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4">
-                    <h2 className="text-sm font-semibold mb-2">
-                        Backups Today
-                    </h2>
-                    <p className="text-3xl font-semibold text-sky-300">
-                        {stats.backupsToday}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                        Last backup ran 3 minutes ago.
-                    </p>
-                </div>
-
-                {/* Placeholder for chart/uptime */}
-                <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 lg:col-span-2">
-                    <h2 className="text-sm font-semibold mb-2">
-                        Uptime Overview
-                    </h2>
-                    <div className="h-40 flex items-center justify-center text-slate-500 text-xs">
-                        (Later: add uptime graph here)
-                    </div>
-                </div>
-            </div>
-
-            {/* Recent activity */}
-            <div className="mt-8 bg-slate-900/70 border border-slate-800 rounded-xl p-4">
-                <h2 className="text-sm font-semibold mb-4">Recent Activity</h2>
-                <ul className="divide-y divide-slate-800">
-                    {recentActivity.map((item) => (
-                        <li
-                            key={item.id}
-                            className="py-2 flex items-center justify-between"
-                        >
-                            <div>
-                                <p className="text-sm text-slate-200">
-                                    {item.message}
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                    {item.type}
-                                </p>
-                            </div>
-                            <span className="text-xs text-slate-500">
-                                {item.time}
+                <div className="lg:col-span-2 space-y-6">
+                    <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
+                        <header className="flex items-baseline justify-between mb-4">
+                            <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400">
+                                Overview
+                            </h2>
+                            <span className="text-xs text-neutral-500">
+                                Today
                             </span>
-                        </li>
-                    ))}
-                </ul>
+                        </header>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <StatCard label="Servers" value={stats.servers} />
+                            <StatCard label="Sites" value={stats.sites} />
+                            <StatCard
+                                label="Running"
+                                value={stats.runningSites}
+                                tone="good"
+                            />
+                            <StatCard
+                                label="Stopped"
+                                value={stats.stoppedSites}
+                                tone="bad"
+                            />
+                        </div>
+                    </section>
+
+                    <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
+                        <header className="flex items-center justify-between mb-3">
+                            <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400">
+                                Availability
+                            </h2>
+                            <button className="text-xs uppercase tracking-[0.2em] text-red-300">
+                                Export
+                            </button>
+                        </header>
+                        <div className="h-40 grid place-items-center text-neutral-500 text-xs border border-dashed border-neutral-800 rounded-lg">
+                            Uptime graph placeholder
+                        </div>
+                    </section>
+
+                    <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
+                        <header className="flex items-center justify-between mb-3">
+                            <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400">
+                                Recent Activity
+                            </h2>
+                            <span className="text-xs text-neutral-500">
+                                Newest first
+                            </span>
+                        </header>
+                        <ul className="divide-y divide-neutral-800">
+                            {recentActivity.map((item) => (
+                                <li
+                                    key={item.id}
+                                    className="py-3 flex items-start justify-between"
+                                >
+                                    <div>
+                                        <p className="text-sm font-semibold text-neutral-100">
+                                            {item.message}
+                                        </p>
+                                        <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">
+                                            {item.type}
+                                        </p>
+                                    </div>
+                                    <span className="text-xs text-neutral-500">
+                                        {item.time}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                </div>
+
+                <div className="space-y-6">
+                    <section className="bg-black text-neutral-50 rounded-xl p-6 shadow-sm border border-neutral-800">
+                        <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-500 mb-2">
+                            Backups Today
+                        </h2>
+                        <p className="text-4xl font-bold text-red-400">
+                            {stats.backupsToday}
+                        </p>
+                        <p className="text-xs text-neutral-400 mt-1">
+                            Last backup ran 3 minutes ago.
+                        </p>
+                    </section>
+                </div>
             </div>
         </AppLayout>
     );
@@ -108,13 +130,15 @@ function StatCard({ label, value, tone }) {
         tone === "good"
             ? "text-emerald-300"
             : tone === "bad"
-            ? "text-rose-300"
-            : "text-slate-100";
+            ? "text-red-400"
+            : "text-neutral-50";
 
     return (
-        <div className="bg-slate-900/70 border border-slate-800 rounded-xl px-4 py-3">
-            <p className="text-xs text-slate-400">{label}</p>
-            <p className={`mt-1 text-2xl font-semibold ${color}`}>{value}</p>
+        <div className="border border-neutral-800 rounded-lg px-4 py-3 bg-neutral-950">
+            <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
+                {label}
+            </p>
+            <p className={`mt-2 text-3xl font-bold ${color}`}>{value}</p>
         </div>
     );
 }

@@ -1,5 +1,6 @@
 // resources/js/Pages/Sites/Show.jsx
 import AppLayout from "../../Layouts/AppLayout";
+import { Link } from "@inertiajs/react";
 
 export default function SiteShow() {
     // Eventually this comes from backend props
@@ -19,33 +20,36 @@ export default function SiteShow() {
         <AppLayout title={`Site · ${site.domain}`}>
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Main panel */}
-                <div className="flex-1 space-y-4">
-                    <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4">
-                        <h1 className="text-lg font-semibold mb-1">
-                            {site.domain}
-                        </h1>
-                        <p className="text-xs text-slate-500">
-                            Hosted on{" "}
-                            <span className="text-slate-200">
-                                {site.server.name}
-                            </span>{" "}
-                            · PHP {site.phpVersion}
+                <div className="flex-1 space-y-6">
+                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
+                        <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
+                            Site
+                        </p>
+                        <h1 className="text-2xl font-bold mt-1 text-neutral-50">{site.domain}</h1>
+                        <p className="text-xs uppercase tracking-[0.2em] text-neutral-500 mt-2">
+                            Hosted on <span className="text-neutral-100">{site.server.name}</span> · PHP {site.phpVersion}
                         </p>
 
-                        <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                        <div className="mt-5 flex flex-wrap gap-2 text-xs">
                             <StatusBadge status={site.status} />
-                            <button className="px-3 py-1 rounded-md bg-slate-800 text-slate-100 hover:bg-slate-700">
+                            <button className="px-4 py-2 rounded-md border border-neutral-700 text-neutral-200 uppercase tracking-[0.2em] hover:border-neutral-500">
                                 Visit Site
                             </button>
-                            <button className="px-3 py-1 rounded-md bg-slate-800 text-slate-100 hover:bg-slate-700">
+                            <button className="px-4 py-2 rounded-md border border-neutral-700 text-neutral-200 uppercase tracking-[0.2em] hover:border-neutral-500">
                                 Open WP Admin
                             </button>
+                            <Link
+                                href={`/sites/${site.id}/edit`}
+                                className="px-4 py-2 rounded-md border border-red-800 text-red-200 uppercase tracking-[0.2em] hover:border-red-500"
+                            >
+                                Edit settings
+                            </Link>
                         </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4">
-                        <h2 className="text-sm font-semibold mb-3">
+                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
+                        <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400 mb-4">
                             Quick Actions
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
@@ -60,24 +64,24 @@ export default function SiteShow() {
                 </div>
 
                 {/* Sidebar: Backups */}
-                <div className="w-full lg:w-80 bg-slate-900/70 border border-slate-800 rounded-xl p-4">
-                    <h2 className="text-sm font-semibold mb-3">Backups</h2>
-                    <button className="w-full mb-3 px-3 py-1.5 text-xs rounded-md bg-sky-600 hover:bg-sky-500 text-white">
-                        Create backup
-                    </button>
+                <div className="w-full lg:w-80 bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                        <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400">Backups</h2>
+                        <button className="text-[11px] uppercase tracking-[0.2em] text-red-300">
+                            Create backup
+                        </button>
+                    </div>
                     <ul className="space-y-2 text-xs">
                         {site.backups.map((b) => (
                             <li
                                 key={b.id}
-                                className="flex items-center justify-between px-2 py-1 rounded-md bg-slate-950/70 border border-slate-800"
+                                className="flex items-center justify-between px-3 py-3 rounded-md border border-neutral-800 bg-neutral-950"
                             >
                                 <div>
-                                    <p className="text-slate-200">{b.size}</p>
-                                    <p className="text-slate-500">
-                                        {b.created_at}
-                                    </p>
+                                    <p className="text-neutral-100 font-semibold">{b.size}</p>
+                                    <p className="text-neutral-500">{b.created_at}</p>
                                 </div>
-                                <button className="text-sky-300 hover:underline">
+                                <button className="text-red-300 text-[11px] uppercase tracking-[0.2em] hover:underline">
                                     Download
                                 </button>
                             </li>
@@ -92,13 +96,13 @@ export default function SiteShow() {
 function StatusBadge({ status }) {
     if (status === "running") {
         return (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/30 text-xs">
+            <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-900/40 text-emerald-200 border border-emerald-800 text-[11px] uppercase tracking-[0.2em]">
                 ● Running
             </span>
         );
     }
     return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-400/30 text-xs">
+        <span className="inline-flex items-center px-3 py-1 rounded-full bg-red-900/40 text-red-200 border border-red-800 text-[11px] uppercase tracking-[0.2em]">
             ● Stopped
         </span>
     );
@@ -106,11 +110,13 @@ function StatusBadge({ status }) {
 
 function ActionButton({ label, danger }) {
     const classes = danger
-        ? "bg-rose-900/60 border border-rose-700 text-rose-200 hover:bg-rose-800"
-        : "bg-slate-950/60 border border-slate-800 text-slate-100 hover:bg-slate-900";
+        ? "border-red-800 text-red-200 hover:border-red-500"
+        : "border-neutral-700 text-neutral-200 hover:border-neutral-500";
 
     return (
-        <button className={`px-3 py-2 rounded-md text-left ${classes}`}>
+        <button
+            className={`px-3 py-3 rounded-md text-left border uppercase tracking-[0.2em] text-[11px] ${classes}`}
+        >
             {label}
         </button>
     );
