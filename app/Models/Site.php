@@ -25,4 +25,9 @@ class Site extends Model
     {
         return $this->belongsTo(Server::class);
     }
+
+    public function backups()
+    {
+        return $this->hasMany(Backup::class);
+    }
 }

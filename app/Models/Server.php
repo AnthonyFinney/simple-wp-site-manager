@@ -30,4 +30,9 @@ class Server extends Model
     {
         return $this->hasMany(Site::class);
     }
+
+    public function backups()
+    {
+        return $this->hasMany(Backup::class);
+    }
 }

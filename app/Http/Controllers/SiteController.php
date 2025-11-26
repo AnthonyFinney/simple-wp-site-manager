@@ -22,7 +22,15 @@ class SiteController extends Controller
 
     public function show(int $id)
     {
-        $site = Site::with("server")->findOrFail(($id));
+        $site = Site::with([
+            "server",
+            "backups" => fn($q) => $q
+                ->with("server")
+                ->orderByDesc("snapshot_at")
+                ->orderByDesc("started_at")
+                ->latest()
+                ->limit(10)
+        ])->findOrFail(($id));
         return Inertia::render('Sites/Show', [
             'site' => $site,
         ]);

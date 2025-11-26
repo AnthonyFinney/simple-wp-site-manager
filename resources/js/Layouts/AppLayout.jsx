@@ -2,10 +2,10 @@
 import { Link, Head, usePage } from "@inertiajs/react";
 
 const navItems = [
-    { name: "Dashboard", href: "/" },
-    { name: "Servers", href: "/servers" },
-    { name: "Sites", href: "/sites" },
-    { name: "Backups", href: "/backups" },
+    { name: "Dashboard", href: "/", match: (url) => url === "/" || url.startsWith("/dashboard") },
+    { name: "Servers", href: "/servers", match: (url) => url.startsWith("/servers") },
+    { name: "Sites", href: "/sites", match: (url) => url.startsWith("/sites") && !url.includes("/backups") },
+    { name: "Backups", href: "/backups", match: (url) => url.includes("/backups") },
 ];
 
 export default function AppLayout({ title, children }) {
@@ -21,16 +21,14 @@ export default function AppLayout({ title, children }) {
                         <div className="uppercase tracking-[0.2em] text-[11px] text-neutral-400">
                             WP Control
                         </div>
-                        <div className="mt-2 text-xl font-semibold text-neutral-50">WordPress Ops</div>
-                        <div className="text-xs text-neutral-500">Swiss grid edition</div>
+                        <div className="mt-2 text-xl font-semibold text-neutral-50">
+                            WordPress Ops
+                        </div>
                     </div>
 
                     <nav className="flex-1 px-4 py-6 space-y-1">
                         {navItems.map((item) => {
-                            const active =
-                                item.href === "/"
-                                    ? url === "/" || url.startsWith("/dashboard")
-                                    : url.startsWith(item.href);
+                            const active = item.match ? item.match(url) : url.startsWith(item.href);
                             return (
                                 <Link
                                     key={item.name}
@@ -43,7 +41,9 @@ export default function AppLayout({ title, children }) {
                                     }
                                 >
                                     <span>{item.name}</span>
-                                    <span className="text-[10px] text-neutral-500">→</span>
+                                    <span className="text-[10px] text-neutral-500">
+                                        →
+                                    </span>
                                 </Link>
                             );
                         })}
@@ -51,7 +51,9 @@ export default function AppLayout({ title, children }) {
 
                     <div className="px-6 py-4 border-t border-neutral-800 text-xs text-neutral-400">
                         Logged in as{" "}
-                        <span className="font-semibold text-neutral-50">Demo User</span>
+                        <span className="font-semibold text-neutral-50">
+                            Demo User
+                        </span>
                     </div>
                 </aside>
 
@@ -63,7 +65,9 @@ export default function AppLayout({ title, children }) {
                             <div className="text-[11px] uppercase tracking-[0.3em] text-neutral-500">
                                 {title}
                             </div>
-                            <div className="text-sm font-semibold text-neutral-50">Site manager dashboard</div>
+                            <div className="text-sm font-semibold text-neutral-50">
+                                Site manager dashboard
+                            </div>
                         </div>
                         <div className="text-xs text-neutral-400 flex items-center gap-2">
                             <span className="h-2 w-2 rounded-full bg-emerald-400"></span>

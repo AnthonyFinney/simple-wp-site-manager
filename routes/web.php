@@ -5,9 +5,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ServerController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\BackupController;
+use App\Models\Site;
 
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-Route::get('/dashboard', [DashboardController::class, 'index']);
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::get('/servers', [ServerController::class, 'index'])->name('servers.index');
 Route::get('/servers/create', [ServerController::class, 'create'])->name('servers.create');
@@ -18,4 +19,10 @@ Route::get('/sites/create', [SiteController::class, 'create'])->name('sites.crea
 Route::get('/sites/{id}', [SiteController::class, 'show'])->name('sites.show');
 Route::get('/sites/{id}/edit', [SiteController::class, 'edit'])->name('sites.edit');
 
-Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
+Route::get('/backups', [BackupController::class, 'all'])->name('backups.all');
+Route::delete('/backups', [BackupController::class, 'destroyFromRequest'])->name('backups.destroyFromRequest');
+Route::get('/sites/{site}/backups', [BackupController::class, 'index'])->name('backups.index');
+Route::post('/sites/{site}/backups', [BackupController::class, 'store'])->name('backups.store');
+Route::delete('/sites/{site}/backups/{backup}', [BackupController::class, 'destroy'])->name('backups.destroy');
+Route::delete('/backups/{backup}', [BackupController::class, 'destroyAny'])->name('backups.destroyAny');
+Route::get('/sites/{site}/backups/{backup}/download', [BackupController::class, 'download'])->name('backups.download');

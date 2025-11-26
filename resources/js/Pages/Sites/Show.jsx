@@ -1,10 +1,16 @@
 // resources/js/Pages/Sites/Show.jsx
 import AppLayout from "../../Layouts/AppLayout";
-import { Link } from "@inertiajs/react";
+import { Link, useForm } from "@inertiajs/react";
 
 export default function SiteShow({ site }) {
     const safe = site ?? {};
     const backups = site?.backups ?? [];
+    const { post, processing } = useForm({});
+
+    const triggerBackup = () => {
+        if (!safe.id) return;
+        post(`/sites/${safe.id}/backups`, { preserveScroll: true });
+    };
 
     return (
         <AppLayout title={`Site · ${safe.domain}`}>
@@ -51,7 +57,11 @@ export default function SiteShow({ site }) {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                             <ActionButton label="Restart containers" />
                             <ActionButton label="Flush cache" />
-                            <ActionButton label="Run backup now" />
+                            <ActionButton
+                                label={processing ? "Backing up..." : "Run backup now"}
+                                onClick={triggerBackup}
+                                disabled={processing}
+                            />
                             <ActionButton label="Enable maintenance mode" />
                             <ActionButton label="View logs" />
                             <ActionButton label="Delete site (danger)" danger />
@@ -65,7 +75,11 @@ export default function SiteShow({ site }) {
                         <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400">
                             Backups
                         </h2>
-                        <button className="text-[11px] uppercase tracking-[0.2em] text-red-300">
+                        <button
+                            onClick={triggerBackup}
+                            disabled={processing}
+                            className="text-[11px] uppercase tracking-[0.2em] text-red-300 disabled:opacity-60"
+                        >
                             Create backup
                         </button>
                     </div>
@@ -77,15 +91,25 @@ export default function SiteShow({ site }) {
                             >
                                 <div>
                                     <p className="text-neutral-100 font-semibold">
-                                        {b.size}
+                                        {formatSize(b.size)}
                                     </p>
-                                    <p className="text-neutral-500">
-                                        {b.created_at}
+                                    <p className="text-neutral-500 flex items-center gap-2">
+                                        <span>{formatDate(b.snapshot_at || b.started_at || b.created_at)}</span>
+                                        <StatusBadge status={b.status} />
                                     </p>
                                 </div>
-                                <button className="text-red-300 text-[11px] uppercase tracking-[0.2em] hover:underline">
-                                    Download
-                                </button>
+                                {b.archive_path ? (
+                                    <Link
+                                        href={`/sites/${safe.id}/backups/${b.id}/download`}
+                                        className="text-red-300 text-[11px] uppercase tracking-[0.2em] hover:underline"
+                                    >
+                                        Download
+                                    </Link>
+                                ) : (
+                                    <span className="text-neutral-600 text-[11px] uppercase tracking-[0.2em]">
+                                        Pending
+                                    </span>
+                                )}
                             </li>
                         ))}
                         {backups.length === 0 && (
@@ -101,16 +125,28 @@ export default function SiteShow({ site }) {
 }
 
 function StatusBadge({ status }) {
-    if (status === "running") {
-        return (
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-900/40 text-emerald-200 border border-emerald-800 text-[11px] uppercase tracking-[0.2em]">
-                ● Running
-            </span>
-        );
-    }
+    const normalized = (status || "").toLowerCase();
+    const isGood =
+        normalized === "running" ||
+        normalized === "online" ||
+        normalized === "completed" ||
+        normalized === "success";
+    const isPending =
+        normalized === "queued" ||
+        normalized === "pending" ||
+        normalized === "starting";
+
+    const color = isGood
+        ? "bg-emerald-900/40 text-emerald-200 border border-emerald-800"
+        : isPending
+        ? "bg-amber-900/40 text-amber-100 border border-amber-800"
+        : "bg-red-900/40 text-red-200 border border-red-800";
+
     return (
-        <span className="inline-flex items-center px-3 py-1 rounded-full bg-red-900/40 text-red-200 border border-red-800 text-[11px] uppercase tracking-[0.2em]">
-            ● Stopped
+        <span
+            className={`inline-flex items-center px-3 py-1 rounded-full ${color} text-[11px] uppercase tracking-[0.2em]`}
+        >
+            ● {status || "Unknown"}
         </span>
     );
 }
@@ -127,4 +163,17 @@ function ActionButton({ label, danger }) {
             {label}
         </button>
     );
+}
+
+function formatSize(bytes) {
+    if (!bytes && bytes !== 0) return "—";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatDate(value) {
+    if (!value) return "—";
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? value : date.toLocaleString();
 }
