@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Jobs\RunBackupJob;
 use Illuminate\Support\Facades\Storage;
+use App\Jobs\RestoreBackupJob;
 
 class BackupController extends Controller
 {
@@ -99,6 +100,14 @@ class BackupController extends Controller
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk('backups');
         return $disk->download($backup->archive_path);
+    }
+
+    public function restore(Site $site, Backup $backup)
+    {
+        abort_unless($backup->site_id === $site->id, 404);
+        RestoreBackupJob::dispatch($backup);
+
+        return back()->with('success', 'Restore queued.');
     }
 
     protected function deleteBackupFiles(Backup $backup): void
