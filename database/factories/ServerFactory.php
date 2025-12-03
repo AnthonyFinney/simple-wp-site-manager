@@ -14,6 +14,13 @@ class ServerFactory extends Factory
         return [
             "name" => fake()->company() . " VPS",
             "host" => fake()->ipv4(),
+            "ssh_user" => "root",
+            "ssh_port" => 22,
+            "ssh_auth_type" => "key",
+            "ssh_private_key" => "-----BEGIN RSA PRIVATE KEY-----\nFAKEKEY\n-----END RSA PRIVATE KEY-----",
+            "ssh_password" => null,
+            "requires_sudo" => true,
+            "docker_bin_path" => "/usr/bin/docker",
             "provider" => fake()->randomElement(["Hetzner", "DigitalOcean", "Vultr"]),
             "region" => fake()->randomElement(["fsn1", "nbg1", "sgo1", "lon1"]),
             "status" => "online",

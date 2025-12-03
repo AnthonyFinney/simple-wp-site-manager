@@ -4,8 +4,10 @@ namespace Database\Seeders;
 
 use App\Models\Server;
 use App\Models\Site;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,10 +18,25 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('password'),
+            ]
+        );
+
         $serverData = [
             [
                 'name' => 'Main VPS',
                 'host' => '203.0.113.5',
+                'ssh_user' => 'root',
+                'ssh_port' => 22,
+                'ssh_auth_type' => 'key',
+                'ssh_private_key' => '-----BEGIN PRIVATE KEY----- MAIN -----END PRIVATE KEY-----',
+                'ssh_password' => null,
+                'requires_sudo' => true,
+                'docker_bin_path' => '/usr/bin/docker',
                 'provider' => 'Hetzner',
                 'region' => 'fsn1',
                 'status' => 'online',
@@ -31,6 +48,13 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'DO #1',
                 'host' => '198.51.100.12',
+                'ssh_user' => 'root',
+                'ssh_port' => 22,
+                'ssh_auth_type' => 'password',
+                'ssh_private_key' => null,
+                'ssh_password' => 'example-password',
+                'requires_sudo' => true,
+                'docker_bin_path' => '/usr/bin/docker',
                 'provider' => 'DigitalOcean',
                 'region' => 'sgp1',
                 'status' => 'online',
