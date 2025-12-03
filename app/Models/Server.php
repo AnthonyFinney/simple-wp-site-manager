@@ -12,6 +12,13 @@ class Server extends Model
     protected $fillable = [
         "name",
         "host",
+        "ssh_user",
+        "ssh_port",
+        "ssh_auth_type",
+        "ssh_private_key",
+        "ssh_password",
+        "requires_sudo",
+        "docker_bin_path",
         "provider",
         "region",
         "status",
@@ -24,6 +31,10 @@ class Server extends Model
 
     protected $casts = [
         "ip_addresses" => "array",
+        "ssh_port" => "integer",
+        "requires_sudo" => "boolean",
+        "ssh_private_key" => "encrypted",
+        "ssh_password" => "encrypted",
     ];
 
     public function sites()
