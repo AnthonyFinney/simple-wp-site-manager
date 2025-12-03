@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'monitor' => [
+        'token' => env('MONITOR_TOKEN'),
+    ],
+
+    'ssh' => [
+        'dry_run' => env('SSH_DRY_RUN', true),
+        'timeout' => env('SSH_TIMEOUT', 60),
+        'binary' => env('SSH_BINARY', 'ssh'),
+        'connect_timeout' => env('SSH_CONNECT_TIMEOUT', 15),
+        'stub_backups' => env('SSH_STUB_BACKUPS', env('APP_ENV') === 'local'),
+    ],
+
 ];
