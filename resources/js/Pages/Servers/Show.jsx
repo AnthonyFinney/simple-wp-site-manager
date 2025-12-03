@@ -1,6 +1,15 @@
 // resources/js/Pages/Servers/Show.jsx
 import AppLayout from "../../Layouts/AppLayout";
-import { Link } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
+import {
+    card,
+    dangerButton,
+    ghostButton,
+    label,
+    muted,
+    pill,
+    softCard,
+} from "../../theme";
 
 export default function ServerShow({ server }) {
     const fallback = {
@@ -24,20 +33,34 @@ export default function ServerShow({ server }) {
         { name: "Fail2ban", status: "running" },
     ];
 
+    const deleteUrl = server?.delete_url || (safeServer?.id ? `/servers/${safeServer.id}` : null);
+
+    const handleDelete = () => {
+        const targetUrl = deleteUrl;
+        if (!targetUrl) return;
+        if (!confirm("Delete this server and cascade remove its sites/backups?")) return;
+        router.post(
+            targetUrl,
+            { _method: "delete" },
+            {
+                preserveScroll: false,
+                onSuccess: () => router.visit("/servers"),
+            }
+        );
+    };
+
     return (
         <AppLayout title={`Server · ${safeServer.name}`}>
             <div className="flex flex-col lg:flex-row gap-6">
                 <div className="flex-1 space-y-6">
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
+                    <div className={`${card} p-6`}>
                         <div className="flex items-start justify-between">
                             <div>
-                                <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
-                                    Server
-                                </p>
-                                <h1 className="text-2xl font-bold text-neutral-50">
+                                <p className={label}>Server</p>
+                                <h1 className="text-2xl font-semibold text-white">
                                     {safeServer.name}
                                 </h1>
-                                <p className="text-xs uppercase tracking-[0.2em] text-neutral-500 mt-1">
+                                <p className={`${muted} text-sm mt-1`}>
                                     {safeServer.provider} · {safeServer.region} ·{" "}
                                     {safeServer.os}
                                 </p>
@@ -47,7 +70,7 @@ export default function ServerShow({ server }) {
 
                         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <InfoTile
-                                    label="Public IP"
+                                label="Public IP"
                                 value={safeServer.host}
                             />
                             <InfoTile
@@ -61,22 +84,46 @@ export default function ServerShow({ server }) {
                             <InfoTile label="Disk" value={safeServer.disk} />
                         </div>
 
-                        <div className="mt-6 flex flex-wrap gap-2 text-xs">
-                            <button className="px-4 py-2 rounded-md border border-neutral-700 text-neutral-200 uppercase tracking-[0.2em] hover:border-neutral-500">
-                                Open SSH (todo)
+                        <div className="mt-6 flex flex-wrap gap-3 text-sm">
+                            <a
+                                href={`ssh://${safeServer.ssh_user ?? "root"}@${safeServer.host}`}
+                                className={ghostButton}
+                            >
+                                Open SSH
+                            </a>
+                            {safeServer.id && (
+                                <Link
+                                    href={server?.edit_url || `/servers/${safeServer.id}/edit`}
+                                    className={ghostButton}
+                                >
+                                    Edit details
+                                </Link>
+                            )}
+                            <button
+                                type="button"
+                                disabled
+                                className={`${ghostButton} cursor-not-allowed opacity-60`}
+                                title="System update automation coming soon"
+                            >
+                                Run update (coming soon)
                             </button>
-                            <button className="px-4 py-2 rounded-md border border-neutral-700 text-neutral-200 uppercase tracking-[0.2em] hover:border-neutral-500">
-                                Run update (todo)
-                            </button>
+                            {deleteUrl && (
+                                <button type="button" className={dangerButton} onClick={handleDelete}>
+                                    Delete server
+                                </button>
+                            )}
                         </div>
                     </div>
 
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
+                    <div className={`${card} p-6`}>
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400">
-                                Services
-                            </h2>
-                            <button className="text-xs uppercase tracking-[0.2em] text-red-300">
+                            <h2 className={label}>Services</h2>
+                            <button
+                                type="button"
+                                disabled
+                                className="text-sm text-slate-500 cursor-not-allowed"
+                                title="Restart all coming soon"
+                            >
                                 Restart all
                             </button>
                         </div>
@@ -84,9 +131,9 @@ export default function ServerShow({ server }) {
                             {services.map((service) => (
                                 <div
                                     key={service.name}
-                                    className="flex items-center justify-between px-4 py-3 rounded-lg border border-neutral-800 bg-neutral-950"
+                                    className={`${softCard} flex items-center justify-between px-4 py-3`}
                                 >
-                                    <span className="text-neutral-100 font-semibold">
+                                    <span className="text-white font-semibold">
                                         {service.name}
                                     </span>
                                     <StatusBadge status={service.status} />
@@ -97,14 +144,12 @@ export default function ServerShow({ server }) {
                 </div>
 
                 <div className="w-full lg:w-80 space-y-4">
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-sm">
+                    <div className={`${card} p-5`}>
                         <div className="flex items-center justify-between mb-3">
-                            <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400">
-                                Sites on this server
-                            </h2>
+                            <h2 className={label}>Sites on this server</h2>
                             <Link
                                 href="/sites/create"
-                                className="text-[11px] uppercase tracking-[0.2em] text-red-300"
+                                className="text-sm text-cyan-300 hover:text-white"
                             >
                                 + New site
                             </Link>
@@ -113,16 +158,16 @@ export default function ServerShow({ server }) {
                             {sites.map((site) => (
                                 <li
                                     key={site.id}
-                                    className="flex items-center justify-between px-3 py-3 rounded-md border border-neutral-800 bg-neutral-950"
+                                    className={`${softCard} flex items-center justify-between px-3 py-3`}
                                 >
                                     <div>
                                         <Link
                                             href={`/sites/${site.id}`}
-                                            className="text-neutral-100 font-semibold hover:text-red-400"
+                                            className="text-white font-semibold hover:text-cyan-200"
                                         >
                                             {site.domain}
                                         </Link>
-                                        <p className="text-neutral-500 uppercase tracking-[0.15em] text-[11px]">
+                                        <p className={`${muted} text-[11px]`}>
                                             ID: {site.id}
                                         </p>
                                     </div>
@@ -130,7 +175,7 @@ export default function ServerShow({ server }) {
                                 </li>
                             ))}
                             {sites.length === 0 && (
-                                <li className="px-3 py-3 rounded-md border border-neutral-800 bg-neutral-950 text-neutral-500 text-[11px] uppercase tracking-[0.15em]">
+                                <li className={`${softCard} px-3 py-3 text-slate-400 text-[12px]`}>
                                     No sites yet.
                                 </li>
                             )}
@@ -144,9 +189,9 @@ export default function ServerShow({ server }) {
 
 function InfoTile({ label, value }) {
     return (
-        <div className="bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2">
-            <p className="text-xs text-neutral-500">{label}</p>
-            <p className="text-sm text-neutral-100">{value}</p>
+        <div className={`${softCard} px-3 py-2`}>
+            <p className={`${muted} text-xs`}>{label}</p>
+            <p className="text-sm text-white">{value}</p>
         </div>
     );
 }
@@ -154,12 +199,12 @@ function InfoTile({ label, value }) {
 function StatusBadge({ status }) {
     const isOnline = status === "online" || status === "running";
     const color = isOnline
-        ? "bg-emerald-900/40 text-emerald-200 border border-emerald-800"
-        : "bg-red-900/40 text-red-200 border border-red-800";
+        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+        : "border-rose-500/30 bg-rose-500/10 text-rose-200";
 
     return (
         <span
-            className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] uppercase tracking-[0.2em] ${color}`}
+            className={`${pill} border ${color} px-3 py-1`}
         >
             ● {isOnline ? "Online" : "Offline"}
         </span>

@@ -2,11 +2,22 @@
 import AppLayout from "../../Layouts/AppLayout";
 import { Link, router, useForm } from "@inertiajs/react";
 import { useState } from "react";
+import {
+    card,
+    ghostButton,
+    label,
+    muted,
+    primaryButton,
+    tableCell,
+    tableHeader,
+} from "../../theme";
 
 export default function BackupsIndex({ site, backups = [] }) {
     const { post, processing } = useForm({});
     const [deletingId, setDeletingId] = useState(null);
+    const [restoringId, setRestoringId] = useState(null);
     const [deleteError, setDeleteError] = useState("");
+    const [refreshing, setRefreshing] = useState(false);
     const hasSiteContext = !!site;
 
     const triggerBackup = () => {
@@ -60,53 +71,85 @@ export default function BackupsIndex({ site, backups = [] }) {
         return null;
     };
 
+    const restoreBackup = (backup) => {
+        if (!backup?.id || !backup.site_id) return;
+        setRestoringId(backup.id);
+        router.post(
+            `/sites/${backup.site_id}/backups/${backup.id}/restore`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setRestoringId(null),
+            }
+        );
+    };
+
+    const refresh = () => {
+        setRefreshing(true);
+        router.reload({
+            only: ["backups"],
+            onFinish: () => setRefreshing(false),
+        });
+    };
+
     return (
         <AppLayout title={`Backups · ${site?.domain ?? "Site"}`}>
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
-                        Safety
-                    </p>
-                    <h1 className="text-2xl font-bold text-neutral-50">
+                    <p className={label}>Safety</p>
+                    <h1 className="text-2xl font-semibold text-white">
                         {hasSiteContext
                             ? `Backups for ${site?.domain}`
                             : "All Backups"}
                     </h1>
+                    <p className={`${muted} text-sm`}>
+                        Download, restore, or prune snapshots across your sites.
+                    </p>
                 </div>
-                <button
-                    onClick={triggerBackup}
-                    disabled={processing || !site?.id}
-                    className="px-4 py-2 text-xs uppercase tracking-[0.2em] rounded-md bg-red-600 hover:bg-red-500 disabled:opacity-60 text-white shadow-sm"
-                >
-                    Create backup
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={refresh}
+                        disabled={refreshing}
+                        className={ghostButton}
+                    >
+                        {refreshing ? "Refreshing..." : "Refresh"}
+                    </button>
+                    <button
+                        onClick={triggerBackup}
+                        disabled={processing || !site?.id}
+                        className={primaryButton}
+                    >
+                        {processing ? "Backing up..." : "Create backup"}
+                    </button>
+                </div>
             </div>
 
             {deleteError && (
-                <div className="mb-4 px-4 py-3 rounded-md border border-red-800 bg-red-900/40 text-sm text-red-100">
+                <div className="mb-4 px-4 py-3 rounded-md border border-rose-500/40 bg-rose-500/10 text-sm text-rose-50">
                     {deleteError}
                 </div>
             )}
 
-            <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-sm">
+            <div className={`${card} overflow-hidden`}>
                 {!hasSiteContext && (
-                    <div className="p-6 text-sm text-neutral-400">
+                    <div className="p-6 text-sm text-slate-300">
                         Showing backups across all sites.
                     </div>
                 )}
                 <table className="min-w-full text-sm">
-                    <thead className="bg-neutral-900 border-b border-neutral-800">
+                    <thead className="border-b border-slate-800/70">
                         <tr>
                             <Th>Site</Th>
                             <Th>Server</Th>
                             <Th>Created</Th>
                             <Th>Type</Th>
                             <Th>Size</Th>
+                            <Th>Details</Th>
                             <Th>Status</Th>
                             <Th className="text-right">Actions</Th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-800/70">
                         {backups.map((backup, idx) => {
                             const siteId =
                                 backup.site_id ??
@@ -123,8 +166,8 @@ export default function BackupsIndex({ site, backups = [] }) {
                                     key={backup.id}
                                     className={`${
                                         idx % 2 === 0
-                                            ? "bg-neutral-950"
-                                            : "bg-neutral-900"
+                                            ? "bg-slate-950/40"
+                                            : "bg-slate-900/40"
                                     } ${
                                         deletingId === backup.id
                                             ? "opacity-60"
@@ -135,7 +178,7 @@ export default function BackupsIndex({ site, backups = [] }) {
                                         {siteId ? (
                                             <Link
                                                 href={`/sites/${siteId}`}
-                                                className="font-semibold text-neutral-100 hover:text-red-400"
+                                                className="font-semibold text-white hover:text-cyan-200"
                                             >
                                                 {siteDomain}
                                             </Link>
@@ -151,10 +194,21 @@ export default function BackupsIndex({ site, backups = [] }) {
                                                 backup.created_at
                                         )}
                                     </Td>
-                                    <Td className="uppercase tracking-[0.15em] text-[11px] text-neutral-300">
+                                    <Td className="uppercase tracking-[0.15em] text-[11px] text-slate-300">
                                         {backup.type}
                                     </Td>
                                     <Td>{formatSize(backup.size)}</Td>
+                                    <Td className="text-slate-300 max-w-xs">
+                                        {backup.log ? (
+                                            <span className="line-clamp-2">
+                                                {backup.log}
+                                            </span>
+                                        ) : (
+                                            <span className="text-slate-500">
+                                                No log
+                                            </span>
+                                        )}
+                                    </Td>
                                     <Td>
                                         <StatusBadge status={backup.status} />
                                     </Td>
@@ -162,14 +216,29 @@ export default function BackupsIndex({ site, backups = [] }) {
                                         {resolveDownloadUrl(backup) ? (
                                             <Link
                                                 href={resolveDownloadUrl(backup)}
-                                                className="text-[11px] uppercase tracking-[0.2em] text-red-300 hover:underline"
+                                                className="text-[11px] uppercase tracking-[0.14em] text-cyan-300 hover:underline"
                                             >
                                                 Download
                                             </Link>
                                         ) : (
-                                            <span className="text-[11px] uppercase tracking-[0.2em] text-neutral-600">
+                                            <span className="text-[11px] uppercase tracking-[0.14em] text-slate-500">
                                                 Pending
                                             </span>
+                                        )}
+                                        {backup.archive_path && (
+                                            <button
+                                                onClick={() =>
+                                                    restoreBackup(backup)
+                                                }
+                                                disabled={
+                                                    restoringId === backup.id
+                                                }
+                                                className="text-[11px] uppercase tracking-[0.14em] text-emerald-300 hover:underline disabled:opacity-60"
+                                            >
+                                                {restoringId === backup.id
+                                                    ? "Restoring..."
+                                                    : "Restore"}
+                                            </button>
                                         )}
                                         {backup.id && (
                                             <button
@@ -179,7 +248,7 @@ export default function BackupsIndex({ site, backups = [] }) {
                                                 disabled={
                                                     deletingId === backup.id
                                                 }
-                                                className="text-[11px] uppercase tracking-[0.2em] text-neutral-500 hover:underline disabled:opacity-60"
+                                                className="text-[11px] uppercase tracking-[0.14em] text-slate-400 hover:underline disabled:opacity-60"
                                             >
                                                 {deletingId === backup.id
                                                     ? "Deleting..."
@@ -193,8 +262,8 @@ export default function BackupsIndex({ site, backups = [] }) {
                         {backups.length === 0 && (
                             <tr>
                                 <Td
-                                    colSpan={5}
-                                    className="text-center text-neutral-500"
+                                    colSpan={8}
+                                    className="text-center text-slate-400"
                                 >
                                     No backups yet.
                                 </Td>
@@ -210,7 +279,7 @@ export default function BackupsIndex({ site, backups = [] }) {
 function Th({ children, className = "" }) {
     return (
         <th
-            className={`px-4 py-3 text-left text-[11px] font-semibold text-neutral-500 uppercase tracking-[0.25em] ${className}`}
+            className={`${tableHeader} ${className}`}
         >
             {children}
         </th>
@@ -221,7 +290,7 @@ function Td({ children, className = "", colSpan }) {
     return (
         <td
             colSpan={colSpan}
-            className={`px-4 py-3 align-middle text-neutral-100 ${className}`}
+            className={`${tableCell} ${className}`}
         >
             {children}
         </td>
@@ -234,14 +303,14 @@ function StatusBadge({ status }) {
     const isRunning = normalized === "running" || normalized === "queued";
 
     const color = isGood
-        ? "bg-emerald-900/40 text-emerald-200 border border-emerald-800"
+        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
         : isRunning
-        ? "bg-amber-900/40 text-amber-100 border border-amber-800"
-        : "bg-red-900/40 text-red-200 border border-red-800";
+        ? "border-amber-500/30 bg-amber-500/10 text-amber-100"
+        : "border-rose-500/30 bg-rose-500/10 text-rose-200";
 
     return (
         <span
-            className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] uppercase tracking-[0.2em] ${color}`}
+            className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] uppercase tracking-[0.14em] border ${color}`}
         >
             ● {status}
         </span>

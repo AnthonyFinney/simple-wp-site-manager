@@ -1,119 +1,287 @@
 // resources/js/Pages/Sites/Show.jsx
 import AppLayout from "../../Layouts/AppLayout";
-import { Link, useForm } from "@inertiajs/react";
+import { Link, useForm, router } from "@inertiajs/react";
+import { useState } from "react";
+import { card, ghostButton, label, muted, pill, softCard } from "../../theme";
 
 export default function SiteShow({ site }) {
     const safe = site ?? {};
     const backups = site?.backups ?? [];
     const { post, processing } = useForm({});
+    const [action, setAction] = useState("");
+    const [restoringId, setRestoringId] = useState(null);
+    const [refreshing, setRefreshing] = useState(false);
 
     const triggerBackup = () => {
         if (!safe.id) return;
         post(`/sites/${safe.id}/backups`, { preserveScroll: true });
     };
 
+    const runAction = (label, path, method = "post", data = {}) => {
+        if (!safe.id || !path) return;
+        setAction(label);
+        const opts = {
+            preserveScroll: true,
+            data,
+            method,
+            onSuccess: () => {
+                setAction("");
+                router.reload({ only: ["site"] });
+            },
+            onError: () => setAction(""),
+            onCancel: () => setAction(""),
+            onFinish: () => setAction(""),
+        };
+
+        router.visit(path, opts);
+    };
+
+    const deleteUrl =
+        site?.delete_url || (safe.id ? `/sites/${safe.id}` : null);
+
+    const deleteSite = () => {
+        if (!safe.id) return;
+        if (!confirm("Delete this site and queue container cleanup?")) return;
+
+        setAction("Deleting...");
+        router.visit("/sites", {
+            method: "delete",
+            data: { id: safe.id },
+            replace: true,
+            preserveState: false,
+            preserveScroll: false,
+            onSuccess: () => {
+                window.location.href = "/sites";
+            },
+            onError: () => {
+                window.location.href = "/sites";
+            },
+            onFinish: () => {
+                setAction("");
+                window.location.href = "/sites";
+            },
+        });
+    };
+
+    const restoreBackup = (backup) => {
+        if (!backup?.id || !safe.id) return;
+        setRestoringId(backup.id);
+        router.post(
+            `/sites/${safe.id}/backups/${backup.id}/restore`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setRestoringId(null),
+            }
+        );
+    };
+
+    const refreshBackups = () => {
+        if (!safe.id) return;
+        setRefreshing(true);
+        router.reload({
+            only: ["site"],
+            onFinish: () => setRefreshing(false),
+        });
+    };
+
     return (
         <AppLayout title={`Site · ${safe.domain}`}>
             <div className="flex flex-col lg:flex-row gap-6">
-                {/* Main panel */}
                 <div className="flex-1 space-y-6">
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
-                        <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
-                            Site
-                        </p>
-                        <h1 className="text-2xl font-bold mt-1 text-neutral-50">
+                    <div className={`${card} p-6`}>
+                        <p className={label}>Site</p>
+                        <h1 className="text-2xl font-semibold mt-1 text-white">
                             {safe.domain}
                         </h1>
-                        <p className="text-xs uppercase tracking-[0.2em] text-neutral-500 mt-2">
+                        <p className={`${muted} text-sm mt-2`}>
                             Hosted on{" "}
-                            <span className="text-neutral-100">
+                            <span className="text-white">
                                 {safe.server?.name}
                             </span>{" "}
-                            · PHP {safe.php_version}
+                            · PHP {safe.php_version} · Port{" "}
+                            {safe.http_port || 80}
                         </p>
 
-                        <div className="mt-5 flex flex-wrap gap-2 text-xs">
+                        <div className="mt-5 flex flex-wrap gap-2 text-sm">
                             <StatusBadge status={safe.status} />
-                            <button className="px-4 py-2 rounded-md border border-neutral-700 text-neutral-200 uppercase tracking-[0.2em] hover:border-neutral-500">
+                            <a
+                                href={buildUrl(safe.domain, safe.http_port)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={ghostButton}
+                            >
                                 Visit Site
-                            </button>
-                            <button className="px-4 py-2 rounded-md border border-neutral-700 text-neutral-200 uppercase tracking-[0.2em] hover:border-neutral-500">
+                            </a>
+                            <a
+                                href={`${buildUrl(
+                                    safe.domain,
+                                    safe.http_port
+                                )}/wp-admin`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={ghostButton}
+                            >
                                 Open WP Admin
-                            </button>
+                            </a>
                             <Link
                                 href={`/sites/${safe.id}/edit`}
-                                className="px-4 py-2 rounded-md border border-red-800 text-red-200 uppercase tracking-[0.2em] hover:border-red-500"
+                                className={ghostButton}
                             >
                                 Edit settings
                             </Link>
                         </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
-                        <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400 mb-4">
-                            Quick Actions
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                            <ActionButton label="Restart containers" />
-                            <ActionButton label="Flush cache" />
+                    <div className={`${card} p-6`}>
+                        <h2 className={label}>Quick Actions</h2>
+                        <p className={`${muted} text-sm mb-4`}>
+                            Manage containers, redeploy, or request a backup.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                             <ActionButton
-                                label={processing ? "Backing up..." : "Run backup now"}
-                                onClick={triggerBackup}
-                                disabled={processing}
+                                label="Start site"
+                                onClick={() =>
+                                    runAction(
+                                        "Starting...",
+                                        `/sites/${safe.id}/actions/start`
+                                    )
+                                }
+                                disabled={!!action}
                             />
-                            <ActionButton label="Enable maintenance mode" />
-                            <ActionButton label="View logs" />
-                            <ActionButton label="Delete site (danger)" danger />
+                            <ActionButton
+                                label="Stop site"
+                                onClick={() =>
+                                    runAction(
+                                        "Stopping...",
+                                        `/sites/${safe.id}/actions/stop`
+                                    )
+                                }
+                                disabled={!!action}
+                            />
+                            <ActionButton
+                                label="Restart containers"
+                                onClick={() =>
+                                    runAction(
+                                        "Restarting...",
+                                        `/sites/${safe.id}/actions/restart`
+                                    )
+                                }
+                                disabled={!!action}
+                            />
+                            <ActionButton
+                                label={
+                                    processing
+                                        ? "Backing up..."
+                                        : "Run backup now"
+                                }
+                                onClick={triggerBackup}
+                                disabled={processing || !!action}
+                            />
+                            <ActionButton
+                                label="Redeploy"
+                                onClick={() =>
+                                    runAction(
+                                        "Redeploying...",
+                                        `/sites/${safe.id}/actions/redeploy`
+                                    )
+                                }
+                                disabled={!!action}
+                            />
+                            <ActionButton
+                                label="Delete site (danger)"
+                                danger
+                                onClick={deleteSite}
+                                disabled={!!action || !deleteUrl}
+                            />
+                            <div
+                                className={`${muted} text-[11px] uppercase tracking-[0.14em]`}
+                            >
+                                {action}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Sidebar: Backups */}
-                <div className="w-full lg:w-80 bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-sm">
+                <div className={`${card} w-full lg:w-80 p-5`}>
                     <div className="flex items-center justify-between mb-3">
-                        <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400">
-                            Backups
-                        </h2>
-                        <button
-                            onClick={triggerBackup}
-                            disabled={processing}
-                            className="text-[11px] uppercase tracking-[0.2em] text-red-300 disabled:opacity-60"
-                        >
-                            Create backup
-                        </button>
+                        <h2 className={label}>Backups</h2>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={refreshBackups}
+                                disabled={refreshing}
+                                className="text-sm text-slate-300 hover:text-white disabled:opacity-60"
+                            >
+                                {refreshing ? "Refreshing..." : "Refresh"}
+                            </button>
+                            <button
+                                onClick={triggerBackup}
+                                disabled={processing}
+                                className="text-sm text-cyan-300 hover:text-white disabled:opacity-60"
+                            >
+                                Create backup
+                            </button>
+                        </div>
                     </div>
                     <ul className="space-y-2 text-xs">
                         {backups.map((b) => (
                             <li
                                 key={b.id}
-                                className="flex items-center justify-between px-3 py-3 rounded-md border border-neutral-800 bg-neutral-950"
+                                className={`${softCard} flex items-center justify-between px-3 py-3`}
                             >
-                                <div>
-                                    <p className="text-neutral-100 font-semibold">
+                                <div className="flex-1">
+                                    <p className="text-white font-semibold">
                                         {formatSize(b.size)}
                                     </p>
-                                    <p className="text-neutral-500 flex items-center gap-2">
-                                        <span>{formatDate(b.snapshot_at || b.started_at || b.created_at)}</span>
+                                    <p
+                                        className={`${muted} flex items-center gap-2`}
+                                    >
+                                        <span>
+                                            {formatDate(
+                                                b.snapshot_at ||
+                                                    b.started_at ||
+                                                    b.created_at
+                                            )}
+                                        </span>
                                         <StatusBadge status={b.status} />
                                     </p>
+                                    {b.log && (
+                                        <p
+                                            className={`${muted} mt-1 line-clamp-2`}
+                                        >
+                                            {b.log}
+                                        </p>
+                                    )}
                                 </div>
                                 {b.archive_path ? (
-                                    <Link
-                                        href={`/sites/${safe.id}/backups/${b.id}/download`}
-                                        className="text-red-300 text-[11px] uppercase tracking-[0.2em] hover:underline"
-                                    >
-                                        Download
-                                    </Link>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <Link
+                                            href={`/sites/${safe.id}/backups/${b.id}/download`}
+                                            className="text-cyan-300 text-[11px] uppercase tracking-[0.14em] hover:underline"
+                                        >
+                                            Download
+                                        </Link>
+                                        <button
+                                            onClick={() => restoreBackup(b)}
+                                            disabled={restoringId === b.id}
+                                            className="text-emerald-300 text-[11px] uppercase tracking-[0.14em] hover:underline disabled:opacity-60"
+                                        >
+                                            {restoringId === b.id
+                                                ? "Restoring..."
+                                                : "Restore"}
+                                        </button>
+                                    </div>
                                 ) : (
-                                    <span className="text-neutral-600 text-[11px] uppercase tracking-[0.2em]">
+                                    <span className="text-slate-500 text-[11px] uppercase tracking-[0.14em]">
                                         Pending
                                     </span>
                                 )}
                             </li>
                         ))}
                         {backups.length === 0 && (
-                            <li className="px-3 py-3 rounded-md border border-neutral-800 bg-neutral-950 text-neutral-500 text-[11px] uppercase tracking-[0.15em]">
+                            <li
+                                className={`${softCard} px-3 py-3 text-slate-400 text-[12px]`}
+                            >
                                 No backups yet.
                             </li>
                         )}
@@ -137,28 +305,28 @@ function StatusBadge({ status }) {
         normalized === "starting";
 
     const color = isGood
-        ? "bg-emerald-900/40 text-emerald-200 border border-emerald-800"
+        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
         : isPending
-        ? "bg-amber-900/40 text-amber-100 border border-amber-800"
-        : "bg-red-900/40 text-red-200 border border-red-800";
+        ? "border-amber-500/30 bg-amber-500/10 text-amber-100"
+        : "border-rose-500/30 bg-rose-500/10 text-rose-200";
 
     return (
-        <span
-            className={`inline-flex items-center px-3 py-1 rounded-full ${color} text-[11px] uppercase tracking-[0.2em]`}
-        >
+        <span className={`${pill} border ${color} px-3 py-1`}>
             ● {status || "Unknown"}
         </span>
     );
 }
 
-function ActionButton({ label, danger }) {
+function ActionButton({ label, danger, onClick, disabled = false }) {
     const classes = danger
-        ? "border-red-800 text-red-200 hover:border-red-500"
-        : "border-neutral-700 text-neutral-200 hover:border-neutral-500";
+        ? "border-rose-500/30 bg-rose-500/5 text-rose-100 hover:border-rose-400/60"
+        : "border-slate-700/60 bg-slate-900/60 text-slate-100 hover:border-cyan-400/50";
 
     return (
         <button
-            className={`px-3 py-3 rounded-md text-left border uppercase tracking-[0.2em] text-[11px] ${classes}`}
+            onClick={onClick}
+            disabled={disabled}
+            className={`${softCard} px-3 py-3 text-left border text-sm font-semibold ${classes} disabled:opacity-60`}
         >
             {label}
         </button>
@@ -176,4 +344,10 @@ function formatDate(value) {
     if (!value) return "—";
     const date = new Date(value);
     return isNaN(date.getTime()) ? value : date.toLocaleString();
+}
+
+function buildUrl(domain, port) {
+    if (!domain) return "#";
+    const normalizedPort = port && Number(port) !== 80 ? `:${port}` : "";
+    return `https://${domain}${normalizedPort}`;
 }

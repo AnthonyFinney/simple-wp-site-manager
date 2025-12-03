@@ -1,6 +1,7 @@
 // resources/js/Pages/Dashboard.jsx
 import AppLayout from "../Layouts/AppLayout";
 import { Link } from "@inertiajs/react";
+import { card, label, muted, pill, softCard } from "../theme";
 
 export default function Dashboard({ sites = [], servers = [] }) {
     const stats = buildStats(sites, servers);
@@ -32,14 +33,15 @@ export default function Dashboard({ sites = [], servers = [] }) {
         <AppLayout title="Dashboard">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                    <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
-                        <header className="flex items-baseline justify-between mb-4">
-                            <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400">
-                                Overview
-                            </h2>
-                            <span className="text-xs text-neutral-500">
-                                Live counts
-                            </span>
+                    <section className={`${card} p-6`}>
+                        <header className="flex items-center justify-between mb-6">
+                            <div>
+                                <p className={`${label}`}>Overview</p>
+                                <p className={`${muted} text-sm`}>
+                                    Live counts across your stack
+                                </p>
+                            </div>
+                            <span className={`${pill}`}>Realtime</span>
                         </header>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <StatCard label="Servers" value={stats.servers} />
@@ -52,42 +54,45 @@ export default function Dashboard({ sites = [], servers = [] }) {
                             <StatCard
                                 label="Stopped"
                                 value={stats.stoppedSites}
-                                tone="bad"
+                                tone="muted"
                             />
                         </div>
                     </section>
 
-                    <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
-                        <header className="flex items-center justify-between mb-3">
-                            <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400">
-                                Servers
-                            </h2>
+                    <section className={`${card} p-6`}>
+                        <header className="flex items-center justify-between mb-4">
+                            <div>
+                                <p className={`${label}`}>Servers</p>
+                                <p className={`${muted} text-sm`}>
+                                    Health and capacity at a glance
+                                </p>
+                            </div>
                             <Link
                                 href="/servers"
-                                className="text-xs uppercase tracking-[0.2em] text-red-300 hover:text-red-200"
+                                className="text-sm text-cyan-300 hover:text-white"
                             >
-                                View servers →
+                                View all
                             </Link>
                         </header>
-                        <ul className="divide-y divide-neutral-800">
+                        <ul className="divide-y divide-slate-800/70">
                             {topServers.length ? (
                                 topServers.map((server) => (
                                     <li
                                         key={server.id}
                                         className="py-3 flex items-center justify-between gap-4"
                                     >
-                                        <div>
+                                        <div className="space-y-1">
                                             <Link
                                                 href={`/servers/${server.id}`}
-                                                className="text-sm font-semibold text-neutral-100 hover:text-red-400"
+                                                className="text-base font-semibold text-white hover:text-cyan-200"
                                             >
                                                 {server.name}
                                             </Link>
-                                            <p className="text-xs uppercase tracking-[0.2em] text-neutral-500 mt-1">
+                                            <p className={`${muted} text-sm`}>
                                                 {server.region ?? "Unknown"} ·{" "}
                                                 {server.provider ?? "Unknown"}
                                             </p>
-                                            <p className="text-xs text-neutral-500">
+                                            <p className="text-xs text-slate-500">
                                                 {server.host}
                                             </p>
                                         </div>
@@ -95,18 +100,18 @@ export default function Dashboard({ sites = [], servers = [] }) {
                                             <ServerStatusBadge
                                                 status={server.status}
                                             />
-                                            <div className="text-[11px] uppercase tracking-[0.2em] text-neutral-500">
+                                            <div className="text-xs text-slate-400">
                                                 {server.sites_count ?? 0} sites
                                             </div>
                                         </div>
                                     </li>
                                 ))
                             ) : (
-                                <li className="py-3 text-sm text-neutral-500">
+                                <li className="py-3 text-sm text-slate-400">
                                     No servers yet.{" "}
                                     <Link
                                         href="/servers/create"
-                                        className="text-red-300 hover:text-red-200"
+                                        className="text-cyan-300 hover:text-white"
                                     >
                                         Add your first server
                                     </Link>
@@ -116,16 +121,19 @@ export default function Dashboard({ sites = [], servers = [] }) {
                         </ul>
                     </section>
 
-                    <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
-                        <header className="flex items-center justify-between mb-3">
-                            <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400">
-                                Sites
-                            </h2>
+                    <section className={`${card} p-6`}>
+                        <header className="flex items-center justify-between mb-4">
+                            <div>
+                                <p className={`${label}`}>Sites</p>
+                                <p className={`${muted} text-sm`}>
+                                    WordPress installs across servers
+                                </p>
+                            </div>
                             <Link
                                 href="/sites"
-                                className="text-xs uppercase tracking-[0.2em] text-red-300 hover:text-red-200"
+                                className="text-sm text-cyan-300 hover:text-white"
                             >
-                                View sites →
+                                View all
                             </Link>
                         </header>
                         {topSites.length ? (
@@ -133,12 +141,12 @@ export default function Dashboard({ sites = [], servers = [] }) {
                                 {topSites.map((site) => (
                                     <div
                                         key={site.id}
-                                        className="border border-neutral-800 rounded-lg p-4 bg-neutral-950"
+                                        className={`${softCard} p-4`}
                                     >
                                         <div className="flex items-center justify-between">
                                             <Link
                                                 href={`/sites/${site.id}`}
-                                                className="text-sm font-semibold text-neutral-100 hover:text-red-400"
+                                                className="font-semibold text-white hover:text-cyan-200"
                                             >
                                                 {site.domain}
                                             </Link>
@@ -146,12 +154,12 @@ export default function Dashboard({ sites = [], servers = [] }) {
                                                 status={site.status}
                                             />
                                         </div>
-                                        <p className="text-xs uppercase tracking-[0.2em] text-neutral-500 mt-1">
+                                        <p className={`${muted} text-sm mt-1`}>
                                             {site.server?.name ??
                                                 "Unassigned server"}{" "}
                                             · PHP {site.php_version ?? "—"}
                                         </p>
-                                        <p className="text-xs text-neutral-500 mt-2">
+                                        <p className="text-xs text-slate-500 mt-2">
                                             Last backup:{" "}
                                             {site.last_backup_at ?? "—"}
                                         </p>
@@ -159,11 +167,11 @@ export default function Dashboard({ sites = [], servers = [] }) {
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-sm text-neutral-500">
+                            <p className="text-sm text-slate-400">
                                 No sites yet.{" "}
                                 <Link
                                     href="/sites/create"
-                                    className="text-red-300 hover:text-red-200"
+                                    className="text-cyan-300 hover:text-white"
                                 >
                                     Deploy your first site
                                 </Link>
@@ -174,42 +182,36 @@ export default function Dashboard({ sites = [], servers = [] }) {
                 </div>
 
                 <div className="space-y-6">
-                    <section className="bg-black text-neutral-50 rounded-xl p-6 shadow-sm border border-neutral-800">
-                        <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-500 mb-2">
-                            Backups Today
-                        </h2>
-                        <p className="text-4xl font-bold text-red-400">
+                    <section className={`${card} p-6`}>
+                        <p className={`${label} mb-3`}>Backups today</p>
+                        <p className="text-4xl font-bold text-cyan-200">
                             {stats.backupsToday}
                         </p>
-                        <p className="text-xs text-neutral-400 mt-1">
+                        <p className={`${muted} text-sm mt-2`}>
                             Counted from site backup timestamps.
                         </p>
                     </section>
 
-                    <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-sm">
+                    <section className={`${card} p-6`}>
                         <header className="flex items-center justify-between mb-3">
-                            <h2 className="text-sm uppercase tracking-[0.25em] text-neutral-400">
-                                Recent Activity
-                            </h2>
-                            <span className="text-xs text-neutral-500">
-                                Newest first
+                            <p className={`${label}`}>Recent activity</p>
+                            <span className={`${muted} text-xs`}>
+                                Latest events
                             </span>
                         </header>
-                        <ul className="divide-y divide-neutral-800">
+                        <ul className="divide-y divide-slate-800/70">
                             {recentActivity.map((item) => (
                                 <li
                                     key={item.id}
                                     className="py-3 flex items-start justify-between"
                                 >
-                                    <div>
-                                        <p className="text-sm font-semibold text-neutral-100">
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-semibold text-white">
                                             {item.message}
                                         </p>
-                                        <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">
-                                            {item.type}
-                                        </p>
+                                        <StatusPill tone={item.type} />
                                     </div>
-                                    <span className="text-xs text-neutral-500">
+                                    <span className="text-xs text-slate-400">
                                         {item.time}
                                     </span>
                                 </li>
@@ -253,19 +255,17 @@ function buildStats(sites, servers) {
 }
 
 function StatCard({ label, value, tone }) {
-    const color =
-        tone === "good"
-            ? "text-emerald-300"
-            : tone === "bad"
-            ? "text-red-400"
-            : "text-neutral-50";
+    const color = {
+        good: "text-emerald-200",
+        muted: "text-slate-400",
+    }[tone];
 
     return (
-        <div className="border border-neutral-800 rounded-lg px-4 py-3 bg-neutral-950">
-            <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
-                {label}
+        <div className={`${softCard} px-4 py-3`}>
+            <p className={`${label}`}>{label}</p>
+            <p className={`mt-2 text-3xl font-bold ${color ?? "text-white"}`}>
+                {value}
             </p>
-            <p className={`mt-2 text-3xl font-bold ${color}`}>{value}</p>
         </div>
     );
 }
@@ -273,12 +273,12 @@ function StatCard({ label, value, tone }) {
 function ServerStatusBadge({ status }) {
     const isUp = (status || "").toLowerCase() === "online";
     const color = isUp
-        ? "bg-emerald-900/40 text-emerald-200 border border-emerald-800"
-        : "bg-red-900/40 text-red-200 border border-red-800";
+        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+        : "border-rose-500/30 bg-rose-500/10 text-rose-200";
 
     return (
         <span
-            className={`inline-flex items-center px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] rounded-full ${color}`}
+            className={`inline-flex items-center px-3 py-1 text-[11px] uppercase tracking-[0.14em] rounded-full border ${color}`}
         >
             ● {isUp ? "Online" : "Offline"}
         </span>
@@ -288,14 +288,34 @@ function ServerStatusBadge({ status }) {
 function SiteStatusBadge({ status }) {
     const isRunning = (status || "").toLowerCase() === "running";
     const color = isRunning
-        ? "bg-emerald-900/40 text-emerald-200 border border-emerald-800"
-        : "bg-red-900/40 text-red-200 border border-red-800";
+        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+        : "border-slate-600/60 bg-slate-800/50 text-slate-200";
 
     return (
         <span
-            className={`inline-flex items-center px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] rounded-full ${color}`}
+            className={`inline-flex items-center px-3 py-1 text-[11px] uppercase tracking-[0.14em] rounded-full border ${color}`}
         >
             ● {isRunning ? "Running" : "Stopped"}
+        </span>
+    );
+}
+
+function StatusPill({ tone }) {
+    const normalized = (tone || "").toLowerCase();
+    const colors = {
+        backup: "border-cyan-500/40 bg-cyan-500/10 text-cyan-100",
+        deploy: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
+        ssl: "border-amber-500/30 bg-amber-500/10 text-amber-100",
+    };
+    const color =
+        colors[normalized] ||
+        "border-slate-700/60 bg-slate-900/60 text-slate-200";
+
+    return (
+        <span
+            className={`${pill} ${color} px-2 py-0.5 uppercase tracking-[0.12em]`}
+        >
+            {tone}
         </span>
     );
 }

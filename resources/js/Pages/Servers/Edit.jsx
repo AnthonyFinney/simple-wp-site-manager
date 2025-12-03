@@ -1,8 +1,9 @@
-// resources/js/Pages/Servers/Create.jsx
+// resources/js/Pages/Servers/Edit.jsx
 import AppLayout from "../../Layouts/AppLayout";
-import { Link, useForm } from "@inertiajs/react";
+import { Link, router, useForm } from "@inertiajs/react";
 import {
     card,
+    dangerButton,
     ghostButton,
     input as inputClass,
     label as labelClass,
@@ -10,29 +11,44 @@ import {
     primaryButton,
 } from "../../theme";
 
-export default function ServerCreate() {
-    const { data, setData, post, processing, errors } = useForm({
-        name: "",
-        provider: "",
-        host: "",
-        region: "",
-        os: "Ubuntu 24.04 LTS",
-        memory: "",
-        disk: "",
-        ssh_user: "root",
-        ssh_port: 22,
-        ssh_auth_type: "key",
-        ssh_private_key: "",
-        ssh_password: "",
-        requires_sudo: true,
-        docker_bin_path: "/usr/bin/docker",
-        ip_addresses: [],
-        status: "online",
+export default function ServerEdit({ server, statusOptions = [] }) {
+    const { data, setData, put, delete: destroy, processing, errors } = useForm({
+        name: server?.name ?? "",
+        provider: server?.provider ?? "",
+        host: server?.host ?? "",
+        region: server?.region ?? "",
+        os: server?.os ?? "",
+        memory: server?.memory ?? "",
+        disk: server?.disk ?? "",
+        ssh_user: server?.ssh_user ?? "root",
+        ssh_port: server?.ssh_port ?? 22,
+        ssh_auth_type: server?.ssh_auth_type ?? "key",
+        ssh_private_key: server?.ssh_private_key ?? "",
+        ssh_password: server?.ssh_password ?? "",
+        requires_sudo: server?.requires_sudo ?? true,
+        docker_bin_path: server?.docker_bin_path ?? "/usr/bin/docker",
+        ip_addresses: server?.ip_addresses ?? [],
+        status: server?.status ?? "online",
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post("/servers", { preserveScroll: true });
+        if (!server?.id) return;
+        put(`/servers/${server.id}`, {
+            preserveScroll: false,
+            onSuccess: () => {
+                router.visit(`/servers/${server.id}`);
+            },
+        });
+    };
+
+    const handleDelete = () => {
+        if (!server?.id) return;
+        if (!confirm("Delete this server from inventory?")) return;
+        destroy(`/servers/${server.id}`, {
+            preserveScroll: false,
+            onSuccess: () => router.visit("/servers"),
+        });
     };
 
     const setIpAddresses = (value) => {
@@ -43,17 +59,19 @@ export default function ServerCreate() {
         setData("ip_addresses", entries);
     };
 
+    const statusChoices =
+        statusOptions.length > 0 ? statusOptions : ["online", "offline", "maintenance"];
+
     return (
-        <AppLayout title="Add Server">
+        <AppLayout title={`Edit Server · ${server?.name ?? "Server"}`}>
             <div className="max-w-3xl">
                 <div className="mb-6">
-                    <p className={labelClass}>New machine</p>
+                    <p className={labelClass}>Edit</p>
                     <h1 className="text-2xl font-semibold text-white">
-                        Register a server
+                        {server?.name || "Server"}
                     </h1>
                     <p className={`${muted} text-sm`}>
-                        Capture connection details and metadata to bring the
-                        host under management.
+                        Update connection details, metadata, or remove the host from management.
                     </p>
                 </div>
 
@@ -132,7 +150,7 @@ export default function ServerCreate() {
                                 onChange={(e) => setData("status", e.target.value)}
                                 className={`${inputClass} mt-2`}
                             >
-                                {["online", "offline", "maintenance"].map((opt) => (
+                                {statusChoices.map((opt) => (
                                     <option key={opt} value={opt}>
                                         {opt}
                                     </option>
@@ -188,7 +206,11 @@ export default function ServerCreate() {
                     <div>
                         <label className={`${labelClass} block mb-2`}>
                             SSH Private Key
-                            {errors.ssh_private_key && <span className="text-red-400 text-[10px] ml-2 normal-case">{errors.ssh_private_key}</span>}
+                            {errors.ssh_private_key && (
+                                <span className="text-red-400 text-[10px] ml-2 normal-case">
+                                    {errors.ssh_private_key}
+                                </span>
+                            )}
                         </label>
                         <textarea
                             name="ssh_private_key"
@@ -223,7 +245,11 @@ export default function ServerCreate() {
                     <div>
                         <label className={`${labelClass} block mb-2`}>
                             IP Addresses (one per line)
-                            {errors.ip_addresses && <span className="text-red-400 text-[10px] ml-2 normal-case">{errors.ip_addresses}</span>}
+                            {errors.ip_addresses && (
+                                <span className="text-red-400 text-[10px] ml-2 normal-case">
+                                    {errors.ip_addresses}
+                                </span>
+                            )}
                         </label>
                         <textarea
                             name="ip_addresses"
@@ -235,20 +261,35 @@ export default function ServerCreate() {
                         />
                     </div>
 
-                    <div className="pt-2 flex justify-end gap-2">
-                        <Link
-                            href="/servers"
-                            className={ghostButton}
-                        >
-                            Cancel
-                        </Link>
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className={primaryButton}
-                        >
-                            {processing ? "Saving..." : "Save & Continue"}
-                        </button>
+                    <div className="pt-2 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={handleDelete}
+                                className={dangerButton}
+                                disabled={processing}
+                            >
+                                Delete Server
+                            </button>
+                            <p className={`${muted} text-xs`}>
+                                Removing a server also deletes its sites and backups via cascading. No remote actions are executed.
+                            </p>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Link
+                                href={`/servers/${server?.id ?? ""}`}
+                                className={ghostButton}
+                            >
+                                Cancel
+                            </Link>
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className={primaryButton}
+                            >
+                                {processing ? "Saving..." : "Save Changes"}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -261,7 +302,11 @@ function Field({ label, children, error }) {
         <label className={labelClass}>
             <div className="flex items-center justify-between">
                 <span>{label}</span>
-                {error && <span className="text-red-400 text-[10px] normal-case">{error}</span>}
+                {error && (
+                    <span className="text-red-400 text-[10px] normal-case">
+                        {error}
+                    </span>
+                )}
             </div>
             {children}
         </label>

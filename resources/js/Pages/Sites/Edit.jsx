@@ -1,68 +1,185 @@
 // resources/js/Pages/Sites/Edit.jsx
 import AppLayout from "../../Layouts/AppLayout";
+import { Link, useForm, router } from "@inertiajs/react";
+import {
+    card,
+    ghostButton,
+    input as inputClass,
+    label as labelClass,
+    muted,
+    primaryButton,
+} from "../../theme";
 
-export default function SiteEdit({ siteId }) {
-    // Placeholder: normally fetch current settings from props/backend.
-    const site = {
-        id: siteId ?? 1,
-        domain: "blog.example.com",
-        server: "Main VPS",
-        phpVersion: "8.2",
-        cache: "redis",
-        maintenance: false,
-    };
+export default function SiteEdit({ site, servers = [], statusOptions = [] }) {
+    const { data, setData, put, processing, errors } = useForm({
+        server_id: site?.server_id ?? "",
+        domain: site?.domain ?? "",
+        http_port: site?.http_port ?? "",
+        php_version: site?.php_version ?? "",
+        docker_image: site?.docker_image ?? "",
+        project_path: site?.project_path ?? "",
+        container_name: site?.container_name ?? "",
+        status: site?.status ?? "running",
+        wp_admin_email: site?.wp_admin_email ?? "",
+        wp_admin_user: site?.wp_admin_user ?? "",
+    });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const data = Object.fromEntries(new FormData(e.target).entries());
-        console.log("Save site settings (dummy):", data);
-        alert("Saved (frontend-only). Wire to backend later.");
+        put(`/sites/${site?.id}`, {
+            preserveScroll: false,
+            preserveState: false,
+            onSuccess: () => {
+                if (site?.id) {
+                    router.visit(`/sites/${site.id}`, {
+                        replace: true,
+                        preserveScroll: false,
+                        preserveState: false,
+                        onError: () => {
+                            window.location.assign(`/sites/${site.id}`);
+                        },
+                    });
+                }
+            },
+        });
     };
 
     return (
-        <AppLayout title={`Edit Site · ${site.domain}`}>
+        <AppLayout title={`Edit Site · ${site?.domain ?? "Site"}`}>
             <div className="max-w-3xl">
                 <div className="mb-6">
-                    <p className="text-[11px] uppercase tracking-[0.25em] text-neutral-500">
-                        Settings
+                    <p className={labelClass}>Settings</p>
+                    <h1 className="text-2xl font-semibold text-white">{site?.domain}</h1>
+                    <p className={`${muted} text-sm`}>
+                        Adjust runtime ports, container metadata, and admin credentials.
                     </p>
-                    <h1 className="text-2xl font-bold text-neutral-50">{site.domain}</h1>
                 </div>
 
                 <form
                     onSubmit={handleSubmit}
-                    className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 space-y-5 shadow-sm"
+                    className={`${card} p-6 space-y-5`}
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Field label="Domain" name="domain" defaultValue={site.domain} />
-                        <Field label="Server" name="server" defaultValue={site.server} />
-                        <Field label="PHP Version" name="php_version" defaultValue={site.phpVersion} />
-                        <Field label="Cache Driver" name="cache" defaultValue={site.cache} />
+                        <Field label="Domain" error={errors.domain}>
+                            <input
+                                name="domain"
+                                value={data.domain}
+                                onChange={(e) => setData("domain", e.target.value)}
+                                className={`${inputClass} mt-2`}
+                            />
+                        </Field>
+
+                        <Field label="Host Port (unique per server)" error={errors.http_port}>
+                            <input
+                                name="http_port"
+                                type="number"
+                                value={data.http_port}
+                                onChange={(e) => setData("http_port", e.target.value)}
+                                className={`${inputClass} mt-2`}
+                            />
+                        </Field>
+
+                        <Field label="Server" error={errors.server_id}>
+                            <select
+                                name="server_id"
+                                value={data.server_id}
+                                onChange={(e) => setData("server_id", e.target.value)}
+                                className={`${inputClass} mt-2`}
+                            >
+                                {servers.map((srv) => (
+                                    <option key={srv.id} value={srv.id}>
+                                        {srv.name} ({srv.host})
+                                    </option>
+                                ))}
+                            </select>
+                        </Field>
+
+                        <Field label="PHP Version" error={errors.php_version}>
+                            <input
+                                name="php_version"
+                                value={data.php_version}
+                                onChange={(e) => setData("php_version", e.target.value)}
+                                className={`${inputClass} mt-2`}
+                            />
+                        </Field>
+
+                        <Field label="Docker Image" error={errors.docker_image}>
+                            <input
+                                name="docker_image"
+                                value={data.docker_image}
+                                onChange={(e) => setData("docker_image", e.target.value)}
+                                className={`${inputClass} mt-2`}
+                            />
+                        </Field>
+
+                        <Field label="Project Path" error={errors.project_path}>
+                            <input
+                                name="project_path"
+                                value={data.project_path}
+                                onChange={(e) => setData("project_path", e.target.value)}
+                                className={`${inputClass} mt-2`}
+                            />
+                        </Field>
+
+                        <Field label="Container Name" error={errors.container_name}>
+                            <input
+                                name="container_name"
+                                value={data.container_name}
+                                onChange={(e) => setData("container_name", e.target.value)}
+                                className={`${inputClass} mt-2`}
+                            />
+                        </Field>
+
+                        <Field label="Status" error={errors.status}>
+                            <select
+                                name="status"
+                                value={data.status}
+                                onChange={(e) => setData("status", e.target.value)}
+                                className={`${inputClass} mt-2`}
+                            >
+                                {(statusOptions.length ? statusOptions : ["running", "stopped", "deploying", "failed"]).map(
+                                    (opt) => (
+                                        <option key={opt} value={opt}>
+                                            {opt}
+                                        </option>
+                                    )
+                                )}
+                            </select>
+                        </Field>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Toggle label="Maintenance mode" name="maintenance" defaultChecked={site.maintenance} />
-                        <Toggle label="Auto renew SSL" name="auto_ssl" defaultChecked />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                        <ActionButton label="Restart containers" />
-                        <ActionButton label="Purge cache" />
-                        <ActionButton label="Re-issue SSL" />
+                        <Field label="Admin Email" error={errors.wp_admin_email}>
+                            <input
+                                name="wp_admin_email"
+                                value={data.wp_admin_email}
+                                onChange={(e) => setData("wp_admin_email", e.target.value)}
+                                className={`${inputClass} mt-2`}
+                            />
+                        </Field>
+                        <Field label="Admin Username" error={errors.wp_admin_user}>
+                            <input
+                                name="wp_admin_user"
+                                value={data.wp_admin_user}
+                                onChange={(e) => setData("wp_admin_user", e.target.value)}
+                                className={`${inputClass} mt-2`}
+                            />
+                        </Field>
                     </div>
 
                     <div className="pt-2 flex justify-end gap-2">
-                        <button
-                            type="button"
-                            className="px-4 py-2 text-xs uppercase tracking-[0.2em] rounded-md border border-neutral-700 text-neutral-200 hover:border-neutral-500"
+                        <Link
+                            href={`/sites/${site?.id ?? ""}`}
+                            className={ghostButton}
                         >
                             Cancel
-                        </button>
+                        </Link>
                         <button
                             type="submit"
-                            className="px-4 py-2 text-xs uppercase tracking-[0.2em] rounded-md bg-red-600 hover:bg-red-500 text-white shadow-sm"
+                            disabled={processing}
+                            className={primaryButton}
                         >
-                            Save Changes
+                            {processing ? "Saving..." : "Save Changes"}
                         </button>
                     </div>
                 </form>
@@ -71,32 +188,14 @@ export default function SiteEdit({ siteId }) {
     );
 }
 
-function Field({ label, name, defaultValue }) {
+function Field({ label, children, error }) {
     return (
-        <label className="text-[11px] uppercase tracking-[0.2em] text-neutral-400">
-            {label}
-            <input
-                name={name}
-                defaultValue={defaultValue}
-                className="mt-2 block w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-red-500 focus:ring-0"
-            />
+        <label className={labelClass}>
+            <div className="flex items-center justify-between">
+                <span>{label}</span>
+                {error && <span className="text-red-400 text-[10px] normal-case">{error}</span>}
+            </div>
+            {children}
         </label>
-    );
-}
-
-function Toggle({ label, name, defaultChecked }) {
-    return (
-        <label className="flex items-center gap-2 text-xs text-neutral-300">
-            <input type="checkbox" name={name} defaultChecked={defaultChecked} />
-            <span className="uppercase tracking-[0.15em] text-[11px]">{label}</span>
-        </label>
-    );
-}
-
-function ActionButton({ label }) {
-    return (
-        <button className="px-3 py-3 rounded-md border border-neutral-700 text-neutral-200 hover:border-neutral-500 text-left uppercase tracking-[0.2em] text-[11px]">
-            {label}
-        </button>
     );
 }
